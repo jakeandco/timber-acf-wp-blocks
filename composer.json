@@ -1,5 +1,5 @@
 {
-  "name": "palmiak/timber-acf-wp-blocks",
+  "name": "jakeandco/timber-acf-wp-blocks",
   "description": "Create Gutenberg blocks from Twig templates and ACF fields.",
   "keywords": ["wordpress", "gutenberg", "advanced custom fields"],
   "require": {
@@ -17,6 +17,10 @@
       },
       {
           "name": "Nico Prat"
+      },
+      {
+          "name": "Zach Gibb",
+          "email": "zach@jakeandco.com"
       }
   ],
   "autoload": {
