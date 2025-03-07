@@ -60,10 +60,8 @@ if ( ! class_exists( 'Timber_Acf_Wp_Blocks' ) ) {
 					// Strip the file extension to get the slug.
 					$slug = $file_parts['filename'];
 
-					// Get header info from the found template file(s).
-					$file_path    = locate_template( $dir . "/{$slug}.twig" );
-					$file_headers = get_file_data(
-						$file_path,
+					$file_data_headers = apply_filters(
+						'timber/acf-gutenberg-blocks-data/file_headers',
 						array(
 							'title'                      => 'Title',
 							'description'                => 'Description',
@@ -90,6 +88,10 @@ if ( ! class_exists( 'Timber_Acf_Wp_Blocks' ) ) {
 							'default_data'               => 'DefaultData',
 						)
 					);
+
+					// Get header info from the found template file(s).
+					$file_path    = locate_template( $dir . "/{$slug}.twig" );
+					$file_headers = get_file_data( $file_path, $file_data_headers);
 
 					if ( empty( $file_headers['title'] ) || empty( $file_headers['category'] ) ) {
 						continue;
@@ -118,98 +120,115 @@ if ( ! class_exists( 'Timber_Acf_Wp_Blocks' ) ) {
 
 					// If the PostTypes header is set in the template, restrict this block
 					// to those types.
-					if ( ! empty( $file_headers['post_types'] ) ) {
-						$data['post_types'] = explode( ' ', $file_headers['post_types'] );
-					}
+					self::timber_block_default_data_filter('post_types', function ($data, $file_header_value) {
+						$data['post_types'] = explode(' ', $file_header_value);
+						return $data;
+					});
+
 					// If the SupportsAlign header is set in the template, restrict this block
 					// to those aligns.
-					if ( ! empty( $file_headers['supports_align'] ) ) {
+					self::timber_block_default_data_filter('supports_align', function ($data, $file_header_value) {
 						$data['supports']['align'] =
-							in_array( $file_headers['supports_align'], array( 'true', 'false' ), true ) ?
-							filter_var( $file_headers['supports_align'], FILTER_VALIDATE_BOOLEAN ) :
-							explode( ' ', $file_headers['supports_align'] );
-					}
+							in_array($file_header_value, array('true', 'false'), true) ?
+							filter_var($file_header_value, FILTER_VALIDATE_BOOLEAN) :
+							explode(' ', $file_header_value);
+						return $data;
+					});
+
 					// If the SupportsAlignContent header is set in the template, restrict this block
 					// to those aligns.
-					if ( ! empty( $file_headers['supports_align_content'] ) ) {
-						$data['supports']['alignContent'] = ('true' === $file_headers['supports_align_content']) ? 
-							true : (('matrix' === $file_headers['supports_align_content']) ? "matrix" : false);
-					}
+
+					self::timber_block_default_data_filter('supports_align_content', function ($data, $file_header_value) {
+						$data['supports']['alignContent'] = ('true' === $file_header_value) ?
+							true : (('matrix' === $file_header_value) ? "matrix" : false);
+						return $data;
+					});
+
 					// If the SupportsMode header is set in the template, restrict this block
 					// mode feature.
-					if ( ! empty( $file_headers['supports_mode'] ) ) {
+					self::timber_block_default_data_filter('supports_mode', function ($data, $file_header_value) {
 						$data['supports']['mode'] =
-							( 'true' === $file_headers['supports_mode'] ) ? true : false;
-					}
+							('true' === $file_header_value) ? true : false;
+						return $data;
+					});
+
 					// If the SupportsMultiple header is set in the template, restrict this block
 					// multiple feature.
-					if ( ! empty( $file_headers['supports_multiple'] ) ) {
+					self::timber_block_default_data_filter('supports_multiple', function ($data, $file_header_value) {
 						$data['supports']['multiple'] =
-							( 'true' === $file_headers['supports_multiple'] ) ? true : false;
-					}
+							('true' === $file_header_value) ? true : false;
+						return $data;
+					});
+
 					// If the SupportsAnchor header is set in the template, restrict this block
 					// anchor feature.
-					if ( ! empty( $file_headers['supports_anchor'] ) ) {
+					self::timber_block_default_data_filter('supports_anchor', function ($data, $file_header_value) {
 						$data['supports']['anchor'] =
-							( 'true' === $file_headers['supports_anchor'] ) ? true : false;
-					}
+							('true' === $file_header_value) ? true : false;
+						return $data;
+					});
 
 					// If the SupportsCustomClassName is set to false hides the possibilty to
 					// add custom class name.
-					if ( ! empty( $file_headers['supports_custom_class_name'] ) ) {
+					self::timber_block_default_data_filter('supports_custom_class_name', function ($data, $file_header_value) {
 						$data['supports']['customClassName'] =
-							( 'true' === $file_headers['supports_custom_class_name'] ) ? true : false;
-					}
+							('true' === $file_header_value) ? true : false;
+						return $data;
+					});
 
 					// If the SupportsReusable is set in the templates it adds a posibility to
 					// make this block reusable.
-					if ( ! empty( $file_headers['supports_reusable'] ) ) {
+					self::timber_block_default_data_filter('supports_reusable', function ($data, $file_header_value) {
 						$data['supports']['reusable'] =
-							( 'true' === $file_headers['supports_reusable'] ) ? true : false;
-					}
+							('true' === $file_header_value) ? true : false;
+						return $data;
+					});
 
 					// If the SupportsFullHeight is set in the templates it adds a posibility to
 					// make this block full height.
-					if ( ! empty( $file_headers['supports_full_height'] ) ) {
+					self::timber_block_default_data_filter('supports_full_height', function ($data, $file_header_value) {
 						$data['supports']['full_height'] =
-							( 'true' === $file_headers['supports_full_height'] ) ? true : false;
-					}
+							('true' === $file_header_value) ? true : false;
+						return $data;
+					});
 
 					// Gives a possibility to enqueue style. If not an absoulte URL than adds
 					// theme directory.
-					if ( ! empty( $file_headers['enqueue_style'] ) ) {
-						if ( ! filter_var( $file_headers['enqueue_style'], FILTER_VALIDATE_URL ) ) {
+					self::timber_block_default_data_filter('enqueue_style', function ($data, $file_header_value) {
+						if (! filter_var($file_header_value, FILTER_VALIDATE_URL)) {
 							$data['enqueue_style'] =
-								get_template_directory_uri() . '/' . $file_headers['enqueue_style'];
+								get_template_directory_uri() . '/' . $file_header_value;
 						} else {
-							$data['enqueue_style'] = $file_headers['enqueue_style'];
+							$data['enqueue_style'] = $file_header_value;
 						}
-					}
+						return $data;
+					});
 
 					// Gives a possibility to enqueue script. If not an absoulte URL than adds
 					// theme directory.
-					if ( ! empty( $file_headers['enqueue_script'] ) ) {
-						if ( ! filter_var( $file_headers['enqueue_script'], FILTER_VALIDATE_URL ) ) {
+					self::timber_block_default_data_filter('enqueue_script', function ($data, $file_header_value) {
+						if (! filter_var($file_header_value, FILTER_VALIDATE_URL)) {
 							$data['enqueue_script'] =
-								get_template_directory_uri() . '/' . $file_headers['enqueue_script'];
+								get_template_directory_uri() . '/' . $file_header_value;
 						} else {
-							$data['enqueue_script'] = $file_headers['enqueue_script'];
+							$data['enqueue_script'] = $file_header_value;
 						}
-					}
+					});
 
 					// Support for experimantal JSX.
-					if ( ! empty( $file_headers['supports_jsx'] ) ) {
+					self::timber_block_default_data_filter('post_types', function ($data, $file_header_value) {
 						// Leaving the experimaental part for 2 versions.
 						$data['supports']['__experimental_jsx'] =
-							( 'true' === $file_headers['supports_jsx'] ) ? true : false;
+							('true' === $file_header_value) ? true : false;
 						$data['supports']['jsx']                =
-							( 'true' === $file_headers['supports_jsx'] ) ? true : false;
-					}
+							('true' === $file_header_value) ? true : false;
+						return $data;
+					});
 
 					// Support for "example".
-					if ( ! empty( $file_headers['example'] ) ) {
-						$json                       = json_decode( $file_headers['example'], true );
-						$example_data               = ( null !== $json ) ? $json : array();
+					self::timber_block_default_data_filter('post_types', function ($data, $file_header_value) {
+						$json                       = json_decode($file_header_value, true);
+						$example_data               = (null !== $json) ? $json : array();
 						$example_data['is_example'] = true;
 						$data['example']            = array(
 							'attributes' => array(
@@ -217,11 +236,26 @@ if ( ! class_exists( 'Timber_Acf_Wp_Blocks' ) ) {
 								'data' => $example_data,
 							),
 						);
-					}
+
+						return $data;
+					});
 
 					// Support for "parent".
-					if ( ! empty( $file_headers['parent'] ) ) {
-						$data['parent'] = str_getcsv( $file_headers['parent'], ' ', '"' );
+					self::timber_block_default_data_filter('parent', function ($data, $file_header_value) {
+						$data['parent'] = str_getcsv($file_header_value, ' ', '"');
+						return $data;
+					});
+
+					foreach ($file_headers as $file_header_key => $file_header_value) {
+						$data = apply_filters(
+							"timber/acf-gutenberg-blocks-data/file_data/{$file_header_key}",
+							$data,
+							$file_header_value
+						);
+					}
+
+					if (empty($data)) {
+						$data = array();
 					}
 
 					// Merges the default options.
@@ -367,6 +401,21 @@ if ( ! class_exists( 'Timber_Acf_Wp_Blocks' ) ) {
 			}
 
 			return $directories;
+		}
+
+		public static function timber_block_default_data_filter($file_header_key, $callback) {
+			add_filter(
+				"timber/acf-gutenberg-blocks-data/file_data/{$file_header_key}",
+				function ($data = array(), $file_header_value) use ($callback, $file_header_key) {
+					if (!empty($file_header_value)) {
+						 $data = $callback($data, $file_header_value);
+					}
+
+					return $data;
+				},
+				10,
+				2
+			);
 		}
 
 		/**
